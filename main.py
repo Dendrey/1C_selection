@@ -32,9 +32,9 @@ class CalorieCounterApp(QWidget):
         layout.addWidget(calendar)
 
         # Список добавленной еды
-        food_log_list = QListWidget(self)
-        food_log_list.addItems(self.food_log['food_item'].tolist())
-        layout.addWidget(food_log_list)
+        self.food_log_list = QListWidget(self)
+        self.food_log_list.addItems(self.food_log['food_item'].tolist())
+        layout.addWidget(self.food_log_list)
 
         # Кнопка "Добавить еду"
         add_food_button = QPushButton('Добавить еду', self)
@@ -53,16 +53,11 @@ class CalorieCounterApp(QWidget):
     def onFoodSelected(self, food_item):
         QMessageBox.information(self, "Добавлено", f"Вы добавили: {food_item}")
         self.food_list_dialog.close()
-        self.updateFoodLogDisplay()
 
     def updateFoodLogDisplay(self):
-        self.setLayout(QVBoxLayout())  # Refresh the layout
-        self.layout().addWidget(QCalendarWidget(self))
-        self.layout().addWidget(QPushButton('Добавить еду', self))
-
-        food_log_list = QListWidget(self)
-        food_log_list.addItems(self.food_log['food_item'].tolist())
-        self.layout().addWidget(food_log_list)
+        self.food_log_list.clear()
+        print(self.food_log['food_item'].tolist())
+        self.food_log_list.addItems(self.food_log['food_item'].tolist())
 
     def save_food_log(self, food_item, weight):
         """Сохраняет добавленную еду в DataFrame и CSV."""
@@ -92,9 +87,8 @@ class FoodListDialog(QDialog):
         self.food_list.itemDoubleClicked.connect(self.openWeightInputDialog)
 
     def populateFoodList(self):
-        """Заполняем список продуктами."""
-        example_foods = ["Яблоко", "Банан", "Сэндвич", "Крупа", "Йогурт", "Шоколад"]
-        for food in example_foods:
+        foods = load_products("products.csv")["product"].tolist()
+        for food in foods:
             item = QListWidgetItem(food)
             self.food_list.addItem(item)
 
@@ -107,6 +101,7 @@ class FoodListDialog(QDialog):
     def emitFoodSelected(self, food_item, weight):
         self.food_selected.emit(f"{food_item} - {weight} г")
         self.parent().save_food_log(food_item, weight)  # Save food log in parent
+        self.parent().updateFoodLogDisplay()
 
 class WeightInputDialog(QDialog):
     weight_submitted = pyqtSignal(str, float)  # Сигнал для передачи выбранной массы
