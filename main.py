@@ -27,13 +27,14 @@ class CalorieCounterApp(QWidget):
         layout = QVBoxLayout()
 
         # Календарь
-        calendar = QCalendarWidget(self)
-        calendar.setGridVisible(True)
-        layout.addWidget(calendar)
+        self.calendar = QCalendarWidget(self)
+        self.calendar.setGridVisible(True)
+        self.calendar.clicked.connect(self.calendarClicked)  # Connect date selection
+        layout.addWidget(self.calendar)
 
         # Список добавленной еды
         self.food_log_list = QListWidget(self)
-        self.food_log_list.addItems(self.food_log['food_item'].tolist())
+        self.updateFoodLogDisplay()  # Initialize with current date's food log
         layout.addWidget(self.food_log_list)
 
         # Кнопка "Добавить еду"
@@ -45,6 +46,10 @@ class CalorieCounterApp(QWidget):
         self.setGeometry(100, 100, 400, 300)
         self.setWindowTitle('Подсчёт калорий')
 
+    def calendarClicked(self):
+        """Refresh the food log display when a different date is clicked on the calendar."""
+        self.updateFoodLogDisplay()
+
     def openFoodList(self):
         self.food_list_dialog = FoodListDialog(self)
         self.food_list_dialog.food_selected.connect(self.onFoodSelected)
@@ -55,9 +60,10 @@ class CalorieCounterApp(QWidget):
         self.food_list_dialog.close()
 
     def updateFoodLogDisplay(self):
+        selected_date = self.calendar.selectedDate().toString("yyyy-MM-dd") # Get selected date in string format
         self.food_log_list.clear()
-        print(self.food_log['food_item'].tolist())
-        self.food_log_list.addItems(self.food_log['food_item'].tolist())
+        daily_logs = self.food_log[self.food_log['date'] == selected_date]
+        self.food_log_list.addItems(daily_logs['food_item'].tolist())
 
     def save_food_log(self, food_item, weight):
         """Сохраняет добавленную еду в DataFrame и CSV."""
